@@ -1,27 +1,25 @@
 package com.utn;
 
-import jakarta.persistence.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.Persistence;
+import jakarta.persistence.TypedQuery;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    private static final EntityManagerFactory ENTITY_MANAGER_FACTORY =
-            Persistence.createEntityManagerFactory("EquiposPersistenceUnit");
 
+    private static final String PERSISTENCE_UNIT_NAME = "EquiposPersistenceUnit";
+    private static final EntityManagerFactory ENTITY_MANAGER_FACTORY = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
     public static void main(String[] args) {
+        ProcesadorEquipoTemplate procesadorEquipoTemplate = new ProcesadorEquipoArgentina();
+
         try (Scanner scanner = new Scanner(System.in)) {
             int opcion;
 
             do {
-                System.out.println("Selecciona una opción:");
-                System.out.println("1. Crear equipo");
-                System.out.println("2. Leer equipo por ID");
-                System.out.println("3. Leer todos los equipos");
-                System.out.println("4. Actualizar equipo por ID");
-                System.out.println("5. Eliminar equipo por ID");
-                System.out.println("6. Entrenar Equipo");
-                System.out.println("7. Jugar Partido");
-                System.out.println("8. Salir");
+                mostrarMenu();
                 System.out.print("Opción: ");
                 opcion = scanner.nextInt();
 
@@ -42,10 +40,10 @@ public class Main {
                         eliminarEquipo();
                         break;
                     case 6:
-                        entrenarEquipo();
+                        procesadorEquipoTemplate.procesarEquipo(new Equipo());
                         break;
                     case 7:
-                        jugarPartido();
+                        procesadorEquipoTemplate.jugarPartido();
                         break;
                     case 8:
                         System.out.println("Saliendo del programa...");
@@ -57,26 +55,42 @@ public class Main {
         }
     }
 
+    private static void mostrarMenu() {
+        System.out.println("Selecciona una opción:");
+        System.out.println("1. Crear equipo");
+        System.out.println("2. Leer equipo por ID");
+        System.out.println("3. Leer todos los equipos");
+        System.out.println("4. Actualizar equipo por ID");
+        System.out.println("5. Eliminar equipo por ID");
+        System.out.println("6. Entrenar Equipo");
+        System.out.println("7. Jugar Partido");
+        System.out.println("8. Salir");
+    }
+
     private static void crearEquipo() {
         EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
-        EntityTransaction transaction = entityManager.getTransaction();
-        transaction.begin();
+        Scanner scanner = new Scanner(System.in);
 
         try {
-            Equipo equipo = new Equipo();
-            configurarAtributos(entityManager, equipo);
+            EntityTransaction transaction = entityManager.getTransaction();
+            transaction.begin();
 
-            entityManager.persist(equipo);
-            transaction.commit();
+            try {
+                Equipo equipo = new Equipo();
+                configurarAtributos(entityManager, equipo);
 
-            System.out.println("Equipo creado con éxito. ID: " + equipo.getId());
-        } catch (Exception e) {
-            if (transaction.isActive()) {
-                transaction.rollback();
+                entityManager.persist(equipo);
+                transaction.commit();
+
+                System.out.println("Equipo creado con éxito. ID: " + equipo.getId());
+            } catch (Exception e) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+                System.err.println("Error al crear el equipo: " + e.getMessage());
             }
-            e.printStackTrace();
         } finally {
-            if (entityManager != null && entityManager.isOpen()) {
+            if (entityManager.isOpen()) {
                 entityManager.close();
             }
         }
@@ -99,13 +113,14 @@ public class Main {
                 System.out.println("No se encontró un equipo con el ID proporcionado.");
             }
         } finally {
-            entityManager.close();
+            if (entityManager.isOpen()) {
+                entityManager.close();
+            }
         }
     }
 
     private static void leerTodosLosEquipos() {
         EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
-
         try {
             TypedQuery<Equipo> query = entityManager.createQuery("SELECT e FROM Equipo e", Equipo.class);
             List<Equipo> equipos = query.getResultList();
@@ -118,72 +133,86 @@ public class Main {
             } else {
                 System.out.println("No hay equipos registrados.");
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
-            entityManager.close();
+            if (entityManager.isOpen()) {
+                entityManager.close();
+            }
         }
     }
 
     private static void actualizarEquipo() {
         EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
-        EntityTransaction transaction = entityManager.getTransaction();
         Scanner scanner = new Scanner(System.in);
 
         try {
+            EntityTransaction transaction = entityManager.getTransaction();
             transaction.begin();
 
-            System.out.print("Ingrese el ID del equipo que desea actualizar: ");
-            long equipoId = scanner.nextLong();
+            try {
+                System.out.print("Ingrese el ID del equipo que desea actualizar: ");
+                long equipoId = scanner.nextLong();
+                scanner.nextLine(); // Consumir la nueva línea después del nextLong()
 
-            Equipo equipo = entityManager.find(Equipo.class, equipoId);
+                Equipo equipo = entityManager.find(Equipo.class, equipoId);
 
-            if (equipo != null) {
-                System.out.println("Información actual del equipo:");
-                mostrarInformacionEquipo(equipo);
+                if (equipo != null) {
+                    System.out.println("Información actual del equipo:");
+                    mostrarInformacionEquipo(equipo);
 
-                configurarAtributos(entityManager, equipo);
+                    configurarAtributos(entityManager, equipo);
 
-                transaction.commit();
-                System.out.println("Equipo actualizado con éxito.");
-            } else {
-                System.out.println("No se encontró un equipo con el ID proporcionado.");
+                    transaction.commit();
+                    System.out.println("Equipo actualizado con éxito.");
+                } else {
+                    System.out.println("No se encontró un equipo con el ID proporcionado.");
+                }
+            } catch (Exception e) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+                System.err.println("Error al actualizar el equipo: " + e.getMessage());
             }
-        } catch (Exception e) {
-            if (transaction.isActive()) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
         } finally {
-            entityManager.close();
+            if (entityManager.isOpen()) {
+                entityManager.close();
+            }
         }
     }
 
     private static void eliminarEquipo() {
         EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
-        EntityTransaction transaction = entityManager.getTransaction();
         Scanner scanner = new Scanner(System.in);
 
         try {
+            EntityTransaction transaction = entityManager.getTransaction();
             transaction.begin();
 
-            System.out.print("Ingrese el ID del equipo que desea eliminar: ");
-            long equipoId = scanner.nextLong();
+            try {
+                System.out.print("Ingrese el ID del equipo que desea eliminar: ");
+                long equipoId = scanner.nextLong();
+                scanner.nextLine(); // Consumir la nueva línea después del nextLong()
 
-            Equipo equipo = entityManager.find(Equipo.class, equipoId);
+                Equipo equipo = entityManager.find(Equipo.class, equipoId);
 
-            if (equipo != null) {
-                entityManager.remove(equipo);
-                transaction.commit();
-                System.out.println("Equipo eliminado con éxito.");
-            } else {
-                System.out.println("No se encontró un equipo con el ID proporcionado.");
+                if (equipo != null) {
+                    entityManager.remove(equipo);
+                    transaction.commit();
+                    System.out.println("Equipo eliminado con éxito.");
+                } else {
+                    System.out.println("No se encontró un equipo con el ID proporcionado.");
+                }
+            } catch (Exception e) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+                System.err.println("Error al eliminar el equipo: " + e.getMessage());
             }
-        } catch (Exception e) {
-            if (transaction.isActive()) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
         } finally {
-            entityManager.close();
+            if (entityManager.isOpen()) {
+                entityManager.close();
+            }
         }
     }
 
@@ -198,85 +227,26 @@ public class Main {
     }
 
     private static void configurarAtributos(EntityManager entityManager, Equipo equipo) {
-        Scanner scanner = new Scanner(System.in);
+        try (Scanner scanner = new Scanner(System.in)) {
+            System.out.print("Ingrese el nombre del equipo: ");
+            equipo.setNombre(scanner.nextLine());
 
-        System.out.print("Ingrese el nombre del equipo: ");
-        equipo.setNombre(scanner.nextLine());
+            System.out.print("Ingrese la cantidad de jugadores titulares: ");
+            equipo.setTitulares(scanner.nextInt());
 
-        System.out.print("Ingrese la cantidad de jugadores titulares: ");
-        equipo.setTitulares(scanner.nextInt());
+            System.out.print("Ingrese la cantidad de jugadores suplentes: ");
+            equipo.setSuplentes(scanner.nextInt());
 
-        System.out.print("Ingrese la cantidad de jugadores suplentes: ");
-        equipo.setSuplentes(scanner.nextInt());
+            scanner.nextLine(); // Consumir la nueva línea después del nextInt()
 
-        scanner.nextLine();
+            System.out.print("Ingrese el nombre del director técnico: ");
+            equipo.setNombreDT(scanner.nextLine());
 
-        System.out.print("Ingrese el nombre del director técnico: ");
-        equipo.setNombreDT(scanner.nextLine());
-
-        System.out.print("Ingrese la cantidad de puntos del equipo: ");
-        equipo.setPuntos(scanner.nextInt());
-    }
-
-    private static void entrenarEquipo() {
-        EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
-        EntityTransaction transaction = entityManager.getTransaction();
-        Scanner scanner = new Scanner(System.in);
-
-        try {
-            System.out.print("Ingrese el ID del equipo que desea entrenar: ");
-            long equipoId = scanner.nextLong();
-
-            transaction.begin();
-
-            Equipo equipo = entityManager.find(Equipo.class, equipoId);
-
-            if (equipo != null) {
-                System.out.println("Entrenando al equipo " + equipo.getNombre());
-
-                transaction.commit();
-                System.out.println("Equipo entrenado con éxito.");
-            } else {
-                System.out.println("No se encontró un equipo con el ID proporcionado.");
-            }
-        } catch (Exception e) {
-            if (transaction.isActive()) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
-        } finally {
-            entityManager.close();
+            System.out.print("Ingrese la cantidad de puntos del equipo: ");
+            equipo.setPuntos(scanner.nextInt());
         }
     }
 
-    private static void jugarPartido() {
-        EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
-        EntityTransaction transaction = entityManager.getTransaction();
-        Scanner scanner = new Scanner(System.in);
-
-        try {
-            System.out.print("Ingrese el ID del equipo que desea jugar el partido: ");
-            long equipoId = scanner.nextLong();
-
-            transaction.begin();
-
-            Equipo equipo = entityManager.find(Equipo.class, equipoId);
-
-            if (equipo != null) {
-                System.out.println("Jugando partido con " + equipo.getNombre());
-
-                transaction.commit();
-                System.out.println("Partido jugado con éxito.");
-            } else {
-                System.out.println("No se encontró un equipo con el ID proporcionado.");
-            }
-        } catch (Exception e) {
-            if (transaction.isActive()) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
-        } finally {
-            entityManager.close();
-        }
+    private static class EquiposPersistenceUnit {
     }
 }

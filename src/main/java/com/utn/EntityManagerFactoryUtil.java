@@ -6,7 +6,7 @@ import jakarta.persistence.Persistence;
 
 public class EntityManagerFactoryUtil {
 
-    private static final String PERSISTENCE_UNIT_NAME = "tuUnidadDePersistencia"; // Reemplaza esto con el nombre de tu unidad de persistencia
+    private static final String PERSISTENCE_UNIT_NAME = "EquiposPersistenceUnit"; // Reemplaza esto con el nombre de tu unidad de persistencia
 
     private static final EntityManagerFactory ENTITY_MANAGER_FACTORY;
 

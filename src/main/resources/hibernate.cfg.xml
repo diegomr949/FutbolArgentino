@@ -1,4 +1,3 @@
-<!-- src/main/resources/hibernate.cfg.xml -->
 <!DOCTYPE hibernate-configuration PUBLIC
         "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
         "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
@@ -12,6 +11,13 @@
         <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/utn</property>
         <property name="hibernate.connection.username">root</property>
         <property name="hibernate.connection.password">root</property>
+
+        <!-- Configuración adicional para evitar problemas con la versión 8 de MySQL Connector/J -->
+        <property name="hibernate.connection.serverTimezone">UTC</property>
+        <property name="hibernate.jdbc.time_zone">UTC</property>
+        <property name="hibernate.connection.useUnicode">true</property>
+        <property name="hibernate.connection.characterEncoding">utf8</property>
+        <property name="hibernate.connection.charSet">utf8</property>
 
         <!-- Otras configuraciones -->
 

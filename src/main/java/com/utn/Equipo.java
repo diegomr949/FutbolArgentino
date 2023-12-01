@@ -24,9 +24,10 @@ public class Equipo {
     @Column(name = "puntos")
     private int puntos;
 
-    //Constructores
+    // Constructores
     public Equipo() {
     }
+
     public Equipo(String nombre, int titulares, int suplentes, String nombreDT, int puntos) {
         this.nombre = nombre;
         this.titulares = titulares;
@@ -36,7 +37,6 @@ public class Equipo {
     }
 
     // Getters y setters
-
     public Long getId() {
         return id;
     }
@@ -83,5 +83,24 @@ public class Equipo {
 
     public void setPuntos(int puntos) {
         this.puntos = puntos;
+    }
+
+    // Método para actualizar puntos según el resultado del partido
+    public void actualizarPuntos(int puntosGanados, int puntosPerdidos) {
+        this.puntos += puntosGanados - puntosPerdidos;
+        // Aquí también podrías actualizar otros atributos si es necesario
+    }
+
+    // Sobrescribe el método toString para facilitar la impresión de información
+    @Override
+    public String toString() {
+        return "com.utn.Equipo{" +
+                "id=" + id +
+                ", nombre='" + nombre + '\'' +
+                ", titulares=" + titulares +
+                ", suplentes=" + suplentes +
+                ", nombreDT='" + nombreDT + '\'' +
+                ", puntos=" + puntos +
+                '}';
     }
 }

@@ -2,14 +2,12 @@ package com.utn;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
-
 import java.util.Scanner;
 
 public abstract class ProcesadorEquipoTemplate {
 
-    private static final EntityManager ENTITY_MANAGER = EntityManagerFactoryUtil.getEntityManager();
-
-    private Scanner scanner = new Scanner(System.in);
+    protected static final EntityManager ENTITY_MANAGER = EntityManagerFactoryUtil.getEntityManager();
+    protected Scanner scanner = new Scanner(System.in);
 
     public final void procesarEquipo(Equipo equipo) {
         configurarAtributos(equipo);
@@ -19,22 +17,7 @@ public abstract class ProcesadorEquipoTemplate {
         guardarEquipoEnBaseDeDatos(equipo);
     }
 
-    protected void configurarAtributos(Equipo equipo) {
-        System.out.print("Ingrese el nombre del equipo: ");
-        equipo.setNombre(scanner.nextLine());
-
-        System.out.print("Ingrese la cantidad de puntos del equipo: ");
-        equipo.setPuntos(Integer.parseInt(scanner.nextLine()));
-
-        System.out.print("Ingrese la cantidad de jugadores titulares: ");
-        equipo.setTitulares(Integer.parseInt(scanner.nextLine()));
-
-        System.out.print("Ingrese la cantidad de jugadores suplentes: ");
-        equipo.setSuplentes(Integer.parseInt(scanner.nextLine()));
-
-        System.out.print("Ingrese el nombre del director técnico: ");
-        equipo.setNombreDT(scanner.nextLine());
-    }
+    protected abstract void configurarAtributos(Equipo equipo);
 
     protected abstract void mostrarInformacion(Equipo equipo);
 
@@ -47,6 +30,8 @@ public abstract class ProcesadorEquipoTemplate {
 
             if (equipo != null) {
                 System.out.println("Entrenando al equipo " + equipo.getNombre());
+                // Lógica específica de entrenamiento
+                entrenarEquipo();
                 transaction.commit();
                 System.out.println("Equipo entrenado con éxito.");
             } else {
@@ -69,6 +54,8 @@ public abstract class ProcesadorEquipoTemplate {
 
             if (equipo != null) {
                 System.out.println("Jugando partido con " + equipo.getNombre());
+                // Lógica específica de jugar partido
+                jugarPartido();
                 transaction.commit();
                 System.out.println("Partido jugado con éxito.");
             } else {
@@ -100,4 +87,8 @@ public abstract class ProcesadorEquipoTemplate {
     protected abstract void entrenarEquipo();
 
     protected abstract void jugarPartido();
+
+    protected abstract void jugarPartido(Equipo equipoLocal, Equipo equipoVisitante);
+
+    protected abstract void registrarResultado(Equipo equipoLocal, Equipo equipoVisitante, int golesLocal, int golesVisitante);
 }
